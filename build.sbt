@@ -1,54 +1,61 @@
-name := "sbt-avro4s"
+import sbt._
+import sbt.Keys._
 
-organization := "com.sksamuel.avro4s"
+lazy val commonSettings = Seq(
+  scalaVersion := "2.10.5",
+  version in ThisBuild := "0.91.0",
+  organization := "com.sksamuel.avro4s",
+  scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf8"),
+  javacOptions ++= Seq("-source", "1.7", "-target", "1.7")
+)
 
-version := "0.91.0"
+lazy val root = (project in file(".")).
+  settings(ScriptedPlugin.scriptedSettings).
+  settings(commonSettings).
+  settings(
+    name := "sbt-avro4s",
+    sbtPlugin := true,
+    licenses += ("MIT", url("https://opensource.org/licenses/MIT")),
+    libraryDependencies ++= Seq(
+      "com.sksamuel.avro4s" %% "avro4s-generator" % "0.91.0"
+    ),
+    publishMavenStyle := true,
 
-scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf8")
+    publishArtifact in Test := false,
+    parallelExecution in Test := false,
+    scriptedLaunchOpts <+= version apply { v => "-Dproject.version="+v },
+    scriptedBufferLog := false,
 
-resolvers := ("releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2") +: resolvers.value
+    resolvers := ("releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2") +: resolvers.value,
 
-javacOptions ++= Seq("-source", "1.7", "-target", "1.7")
+    publishTo <<= version {
+      (v: String) =>
+        val nexus = "https://oss.sonatype.org/"
+        if (v.trim.endsWith("SNAPSHOT"))
+          Some("snapshots" at nexus + "content/repositories/snapshots")
+        else
+          Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    },
 
-scalaVersion := "2.10.5"
-
-libraryDependencies += "com.sksamuel.avro4s" %% "avro4s-generator" % "0.91.0"
-
-sbtPlugin := true
-
-publishMavenStyle := true
-
-publishArtifact in Test := false
-
-parallelExecution in Test := false
-
-publishTo <<= version {
-  (v: String) =>
-    val nexus = "https://oss.sonatype.org/"
-    if (v.trim.endsWith("SNAPSHOT"))
-      Some("snapshots" at nexus + "content/repositories/snapshots")
-    else
-      Some("releases" at nexus + "service/local/staging/deploy/maven2")
-}
-
-pomExtra := {
-  <url>https://github.com/sksamuel/sbt-avro4s</url>
-    <licenses>
-      <license>
-        <name>Apache 2</name>
-        <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-        <distribution>repo</distribution>
-      </license>
-    </licenses>
-    <scm>
-      <url>git@github.com:sksamuel/sbt-avro4s.git</url>
-      <connection>scm:git@github.com:sksamuel/sbt-avro4s.git</connection>
-    </scm>
-    <developers>
-      <developer>
-        <id>sksamuel</id>
-        <name>sksamuel</name>
-        <url>http://github.com/sksamuel</url>
-      </developer>
-    </developers>
-}
+    pomExtra := {
+      <url>https://github.com/sksamuel/sbt-avro4s</url>
+        <licenses>
+          <license>
+            <name>MIT</name>
+            <url>http://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+          </license>
+        </licenses>
+        <scm>
+          <url>git@github.com:sksamuel/sbt-avro4s.git</url>
+          <connection>scm:git@github.com:sksamuel/sbt-avro4s.git</connection>
+        </scm>
+        <developers>
+          <developer>
+            <id>sksamuel</id>
+            <name>sksamuel</name>
+            <url>http://github.com/sksamuel</url>
+          </developer>
+        </developers>
+    }
+  )
