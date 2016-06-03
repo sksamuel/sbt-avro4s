@@ -46,10 +46,10 @@ object Avro4sSbtPlugin extends AutoPlugin {
     val schemaFiles = inDir.listFiles(inc -- exc)
     streams.value.log.info(s"[sbt-avro4s] Found ${schemaFiles.length} schemas")
 
-    val defs = schemaFiles.flatMap(ClassGenerator.apply)
+    val defs = schemaFiles.flatMap(ModuleGenerator.apply)
     streams.value.log.info(s"[sbt-avro4s] Generated ${defs.length} classes")
 
-    val paths = FileRenderer.render(outDir.toPath, defs)
+    val paths = FileRenderer.render(outDir.toPath, TemplateGenerator.apply(defs))
     streams.value.log.info(s"[sbt-avro4s] Wrote class files to [${outDir.toPath}]")
 
     paths.map(_.toFile)

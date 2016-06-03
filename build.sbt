@@ -17,7 +17,7 @@ lazy val root = (project in file(".")).
     sbtPlugin := true,
     licenses += ("MIT", url("https://opensource.org/licenses/MIT")),
     libraryDependencies ++= Seq(
-      "com.sksamuel.avro4s" %% "avro4s-generator" % "0.91.0"
+      "com.sksamuel.avro4s" %% "avro4s-generator" % "1.2.2"
     ),
     publishMavenStyle := true,
 
