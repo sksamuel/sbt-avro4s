@@ -11,7 +11,7 @@ lazy val commonSettings = Seq(
 
 lazy val root = (project in file(".")).
   settings(ScriptedPlugin.scriptedSettings).
-  settings(commonSettings).
+  settings(commonSettings: _*).
   settings(
     name := "sbt-avro4s",
     sbtPlugin := true,
@@ -23,7 +23,11 @@ lazy val root = (project in file(".")).
 
     publishArtifact in Test := false,
     parallelExecution in Test := false,
-    scriptedLaunchOpts <+= version apply { v => "-Dproject.version="+v },
+    scriptedLaunchOpts := { scriptedLaunchOpts.value ++ Seq(
+      "-Xmx1024M",
+      "-XX:MaxPermSize=256M",
+      "-Dplugin.version=" + version.value
+    )},
     scriptedBufferLog := false,
 
     resolvers := ("releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2") +: resolvers.value,
