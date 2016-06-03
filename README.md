@@ -8,8 +8,8 @@ Sbt plugin to use avro4s to generate case classes from avro schemas
 
 `addSbtPlugin("com.sksamuel.avro4s" % "sbt-avro4s" % "0.91.0")`
 
-* Put your avro schemas in `src/main/avro` and then run:
+* Put your avro schemas in `src/main/resources/avro` and then run:
 
 `sbt avrogen`
 
-* The generated case classes will appear in src/main/scala
+* The generated case classes will appear in the managedSourceDirectories
