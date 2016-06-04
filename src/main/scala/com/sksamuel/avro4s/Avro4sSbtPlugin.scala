@@ -43,16 +43,17 @@ object Avro4sSbtPlugin extends AutoPlugin {
     streams.value.log.info(s"[sbt-avro4s] Generating sources from [${inDir}]")
     streams.value.log.info("--------------------------------------------------------------")
 
-    val schemaFiles = inDir.listFiles(inc -- exc)
-    streams.value.log.info(s"[sbt-avro4s] Found ${schemaFiles.length} schemas")
+    val schemaFiles = Option(inDir.listFiles(inc -- exc))
+    streams.value.log.info(s"[sbt-avro4s] Found ${schemaFiles.fold(0)(_.length)} schemas")
+    schemaFiles.map { f =>
+      val defs = f.flatMap(ModuleGenerator.apply)
+      streams.value.log.info(s"[sbt-avro4s] Generated ${defs.length} classes")
 
-    val defs = schemaFiles.flatMap(ModuleGenerator.apply)
-    streams.value.log.info(s"[sbt-avro4s] Generated ${defs.length} classes")
+      val paths = FileRenderer.render(outDir.toPath, TemplateGenerator.apply(defs))
+      streams.value.log.info(s"[sbt-avro4s] Wrote class files to [${outDir.toPath}]")
 
-    val paths = FileRenderer.render(outDir.toPath, TemplateGenerator.apply(defs))
-    streams.value.log.info(s"[sbt-avro4s] Wrote class files to [${outDir.toPath}]")
-
-    paths.map(_.toFile)
+      paths
+    }.getOrElse(Seq()).map(_.toFile)
   }
 
 }
