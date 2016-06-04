@@ -2,6 +2,7 @@ package com.sksamuel.avro4s
 
 import sbt.Keys._
 import sbt._
+import plugins._
 
 object Import {
 
@@ -18,6 +19,7 @@ object Import {
 object Avro4sSbtPlugin extends AutoPlugin {
 
   override def trigger = allRequirements
+  override def requires = JvmPlugin // avoid override of sourceGenerators
 
   val autoImport = Import
 
