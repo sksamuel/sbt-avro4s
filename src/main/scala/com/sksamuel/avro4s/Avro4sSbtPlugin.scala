@@ -6,7 +6,7 @@ import plugins._
 
 object Import {
 
-  lazy val avro2Class = taskKey[Seq[File]]("Generate case classes from avro files")
+  lazy val avro2Class = taskKey[Seq[File]]("Generate case classes from avro files; is a source sourceGenerator")
 
   object Avro4sKeys {
     val avroDirectoryName = SettingKey[String]("Recurrent directory name used for lookup and output")
