@@ -43,7 +43,7 @@ object Avro4sSbtPlugin extends AutoPlugin {
     streams.value.log.info(s"[sbt-avro4s] Generating sources from [${inDir}]")
     streams.value.log.info("--------------------------------------------------------------")
 
-    val schemaFiles = Option(inDir.listFiles(inc -- exc))
+    val schemaFiles = Option(inDir.listFiles(inc -- exc)).filter(_.nonEmpty)
     streams.value.log.info(s"[sbt-avro4s] Found ${schemaFiles.fold(0)(_.length)} schemas")
     schemaFiles.map { f =>
       val defs = f.flatMap(ModuleGenerator.apply)
