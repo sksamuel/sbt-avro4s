@@ -26,7 +26,7 @@ sbt compile:managedSources
 ```
 
 
-The generated case classes will in `target/scala-2.10/src_managed/main/avro/`.
+The case classes will get generated in `target/scala-2.10/src_managed/main/avro/`.
 
 Also see `src/sbt-test/avro2Class` for examples.
 
