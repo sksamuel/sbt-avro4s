@@ -8,7 +8,8 @@ object Import {
   lazy val avro2Class = taskKey[Seq[File]]("Generate case classes from avro files")
 
   object Avro4sKeys {
-
+    val avroDirectoryName = SettingKey[String]("Recurrent directory name used for lookup and output")
+    val avroFileEnding = SettingKey[String]("File ending of avro files, used for lookup and output")
   }
 
 }
@@ -24,10 +25,13 @@ object Avro4sSbtPlugin extends AutoPlugin {
   import Avro4sKeys._
 
   override def projectSettings = Seq(
-    includeFilter in avro2Class := "*.avsc",
+    avroDirectoryName := "avro",
+    avroFileEnding := "avsc",
+
+    includeFilter in avro2Class := s"*.${avroFileEnding.value}",
     excludeFilter in avro2Class := HiddenFileFilter,
-    resourceDirectory in avro2Class <<= (resourceDirectory in Compile) { _ / "avro" },
-    sourceManaged in avro2Class <<= (sourceManaged in Compile) { _ / "avro" },
+    resourceDirectory in avro2Class := (resourceDirectory in Compile).value / avroDirectoryName.value,
+    sourceManaged in avro2Class := (sourceManaged in Compile).value / avroDirectoryName.value,
     managedSourceDirectories in Compile <+= sourceManaged in avro2Class,
     avro2Class := runAvro2Class.value,
     sourceGenerators in Compile += avro2Class.taskValue
