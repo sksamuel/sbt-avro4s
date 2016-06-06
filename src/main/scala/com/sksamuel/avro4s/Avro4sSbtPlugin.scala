@@ -1,44 +1,65 @@
 package com.sksamuel.avro4s
 
-import java.nio.file.Paths
-
 import sbt.Keys._
 import sbt._
+import plugins._
 
-/** @author Stephen Samuel */
+object Import {
+
+  lazy val avro2Class = taskKey[Seq[File]]("Generate case classes from avro files; is a source sourceGenerator")
+
+  object Avro4sKeys {
+    val avroDirectoryName = SettingKey[String]("Recurrent directory name used for lookup and output")
+    val avroFileEnding = SettingKey[String]("File ending of avro files, used for lookup and output")
+  }
+
+}
+
+/** @author Stephen Samuel, Timo Merlin Zint */
 object Avro4sSbtPlugin extends AutoPlugin {
 
-  val GroupId = "com.sksamuel.scapegoat"
-  val ArtifactId = "scalac-scapegoat-plugin"
+  override def trigger = allRequirements
+  override def requires = JvmPlugin // avoid override of sourceGenerators
 
-  object autoImport {
-    lazy val avrogen = taskKey[Unit]("Generate case classes from avro files")
-    lazy val avro4sOutputPath = settingKey[String]("where to write generated case classes")
-    lazy val avro4sSourcePath = settingKey[String]("where to read avro schemas")
-    lazy val avro4sSourceExt = settingKey[String]("The file extension to match for avro files")
-  }
+  val autoImport = Import
 
   import autoImport._
+  import Avro4sKeys._
 
-  override def trigger = allRequirements
-  override def projectSettings = {
-    Seq(
-      avrogen := {
-        streams.value.log.info(s"[sbt-avro4s] Generating sources from [${avro4sSourcePath.value}]")
-        streams.value.log.info("--------------------------------------------------------------")
+  override def projectSettings = Seq(
+    avroDirectoryName := "avro",
+    avroFileEnding := "avsc",
 
-        val schemaFiles = new File(avro4sSourcePath.value).listFiles.filter(_.getName.endsWith(avro4sSourceExt.value))
-        streams.value.log.info(s"[sbt-avro4s] Found ${schemaFiles.length} schemas")
+    includeFilter in avro2Class := s"*.${avroFileEnding.value}",
+    excludeFilter in avro2Class := HiddenFileFilter,
+    resourceDirectory in avro2Class := (resourceDirectory in Compile).value / avroDirectoryName.value,
+    sourceManaged in avro2Class := (sourceManaged in Compile).value / avroDirectoryName.value,
+    managedSourceDirectories in Compile <+= sourceManaged in avro2Class,
+    avro2Class := runAvro2Class.value,
+    sourceGenerators in Compile += avro2Class.taskValue
+  )
 
-        val defs = schemaFiles.flatMap(ClassGenerator.apply)
-        streams.value.log.info(s"[sbt-avro4s] Generated ${defs.length} classes")
+  private def runAvro2Class: Def.Initialize[Task[Seq[File]]] = Def.task {
 
-        FileRenderer.render(Paths.get(avro4sOutputPath.value), defs)
-        streams.value.log.info(s"[sbt-avro4s] Wrote class files to [${avro4sOutputPath.value}]")
-      }      ,
-      avro4sSourcePath := "src/main/avro",
-      avro4sOutputPath := "src/main/scala",
-      avro4sSourceExt := "avsc"
-    )
+    val inc = (includeFilter in avro2Class).value
+    val exc = (excludeFilter in avro2Class).value || DirectoryFilter
+    val inDir = (resourceDirectory in avro2Class).value
+    val outDir = (sourceManaged in avro2Class).value
+
+    streams.value.log.info(s"[sbt-avro4s] Generating sources from [${inDir}]")
+    streams.value.log.info("--------------------------------------------------------------")
+
+    val schemaFiles = Option(inDir.listFiles(inc -- exc)).filter(_.nonEmpty)
+    streams.value.log.info(s"[sbt-avro4s] Found ${schemaFiles.fold(0)(_.length)} schemas")
+    schemaFiles.map { f =>
+      val defs = f.flatMap(ModuleGenerator.apply)
+      streams.value.log.info(s"[sbt-avro4s] Generated ${defs.length} classes")
+
+      val paths = FileRenderer.render(outDir.toPath, TemplateGenerator.apply(defs))
+      streams.value.log.info(s"[sbt-avro4s] Wrote class files to [${outDir.toPath}]")
+
+      paths
+    }.getOrElse(Seq()).map(_.toFile)
   }
+
 }
