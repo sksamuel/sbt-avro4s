@@ -5,8 +5,8 @@ val AvroVersion = "1.8.1"
 val ScalatestVersion = "3.0.0-RC3"
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.10.5",
-  version in ThisBuild := "1.0.0-SNAPSHOT",
+  scalaVersion := "2.10.6",
+  version in ThisBuild := "0.92.0",
   organization := "com.sksamuel.avro4s",
   scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf8"),
   javacOptions ++= Seq("-source", "1.7", "-target", "1.7")
