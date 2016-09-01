@@ -1,5 +1,7 @@
 # sbt-avro4s
 
+[<img src="https://img.shields.io/maven-central/v/com.sksamuel.avro4s/sbt-avro4s*.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Csbt-avro4s)
+
 Sbt plugin to use avro4s to generate case classes from avro schemas
 
 ## Quickstart
@@ -7,14 +9,14 @@ Sbt plugin to use avro4s to generate case classes from avro schemas
 * Add the plugin to your build, eg in `project/plugins.sbt` add this line:
 
 ```scala
- addSbtPlugin("com.sksamuel.avro4s" % "sbt-avro4s" % "0.92.0")
+ addSbtPlugin("com.sksamuel.avro4s" % "sbt-avro4s" % "1.0.0")
 ```
 
 ## Version Compatibility
 
  sbt-avro4s | avro4s
  ---------- | -------
- 0.92.0     | ≥1.6.1
+ 1.0.0     | ≥1.6.1
  0.91.0     | 1.2.2
 
 ### Generate scala classes from Avro schema files
