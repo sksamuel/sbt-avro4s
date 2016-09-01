@@ -48,13 +48,6 @@ lazy val root = (project in file(".")).
 
     pomExtra := {
       <url>https://github.com/sksamuel/sbt-avro4s</url>
-        <licenses>
-          <license>
-            <name>MIT</name>
-            <url>http://opensource.org/licenses/MIT</url>
-            <distribution>repo</distribution>
-          </license>
-        </licenses>
         <scm>
           <url>git@github.com:sksamuel/sbt-avro4s.git</url>
           <connection>scm:git@github.com:sksamuel/sbt-avro4s.git</connection>
