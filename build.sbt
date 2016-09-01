@@ -1,12 +1,12 @@
+import com.typesafe.sbt.pgp.PgpKeys
 import sbt._
 import sbt.Keys._
 
 val AvroVersion = "1.8.1"
-val ScalatestVersion = "3.0.0-RC3"
+val ScalatestVersion = "3.0.0"
 
 lazy val commonSettings = Seq(
   scalaVersion := "2.10.6",
-  version in ThisBuild := "0.92.0",
   organization := "com.sksamuel.avro4s",
   scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf8"),
   javacOptions ++= Seq("-source", "1.7", "-target", "1.7")
@@ -24,7 +24,8 @@ lazy val root = (project in file(".")).
       "org.scalatest"         %% "scalatest"            % ScalatestVersion % "test"
     ),
     publishMavenStyle := true,
-
+    sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
+    sbtrelease.ReleasePlugin.autoImport.releaseCrossBuild := false,
     publishArtifact in Test := false,
     parallelExecution in Test := false,
     scriptedLaunchOpts := { scriptedLaunchOpts.value ++ Seq(
