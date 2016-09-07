@@ -6,6 +6,8 @@ import java.nio.file.{Files, Path, Paths}
 import org.apache.avro.Schema
 import org.apache.avro.Schema.Parser
 
+import scala.reflect.internal.SymbolTable
+
 object ModuleGenerator {
 
   import scala.collection.JavaConverters._
@@ -98,10 +100,27 @@ object UnionType {
 
 case object NullType extends Type
 
-case class FieldDef(name: String, `type`: Type)
+case class FieldDef(name: String, `type`: Type) {
+  lazy val escapedName = {
+    if (FieldDef.isReservedKeyword(name)) {
+      s"`$name`"
+    } else {
+      name
+    }
+  }
+}
+
+private object FieldDef {
+  val universe = scala.reflect.runtime.universe
+  val symbols = universe.asInstanceOf[SymbolTable]
+
+  def isReservedKeyword(name: String): Boolean = {
+    symbols.nme.keywords.contains(symbols.newTermNameCached(name))
+  }
+}
 
 object TypeRenderer {
-  def render(f: FieldDef): String = s"  ${f.name}: ${renderType(f.`type`)}"
+  def render(f: FieldDef): String = s"  ${f.escapedName}: ${renderType(f.`type`)}"
   def renderType(t: Type, forceCoproduct: Boolean = false): String = {
     t match {
       case PrimitiveType(base) => base
