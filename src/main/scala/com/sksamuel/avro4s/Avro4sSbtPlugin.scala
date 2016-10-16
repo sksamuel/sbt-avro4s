@@ -49,7 +49,9 @@ object Avro4sSbtPlugin extends AutoPlugin {
     streams.value.log.info(s"[sbt-avro4s] Generating sources from [${inDir}]")
     streams.value.log.info("--------------------------------------------------------------")
 
-    val schemaFiles = Option(inDir.listFiles(inc -- exc)).filter(_.nonEmpty)
+    val combinedFileFilter = inc -- exc
+    val allFiles = getRecursiveListOfFiles(inDir)
+    val schemaFiles = Option(allFiles.filter(combinedFileFilter.accept))
     streams.value.log.info(s"[sbt-avro4s] Found ${schemaFiles.fold(0)(_.length)} schemas")
     schemaFiles.map { f =>
       val defs = f.flatMap(ModuleGenerator.apply)
@@ -62,4 +64,11 @@ object Avro4sSbtPlugin extends AutoPlugin {
     }.getOrElse(Seq()).map(_.toFile)
   }
 
+  def getRecursiveListOfFiles(dir: File): Array[File] = {
+    val these = dir.listFiles
+    if (these == null)
+      Array.empty[File]
+    else
+      these ++ these.filter(_.isDirectory).flatMap(getRecursiveListOfFiles)
+  }
 }
