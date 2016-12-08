@@ -12,12 +12,11 @@ object ModuleGenerator {
 
   import scala.collection.JavaConverters._
 
-  def apply(str: String): Seq[Module] = apply(new Schema.Parser().parse(str))
-  def apply(in: InputStream): Seq[Module] = ModuleGenerator(new Parser().parse(in))
-  def apply(file: File): Seq[Module] = ModuleGenerator(new Parser().parse(file))
-  def apply(path: Path): Seq[Module] = apply(path.toFile)
+  def apply(in: InputStream): Seq[Module] = ModuleGenerator(Seq(new Parser().parse(in)))
+  def apply(file: File): Seq[Module] = ModuleGenerator.fromFiles(Seq(file))
+  def fromFiles(files: Seq[File]): Seq[Module] = ModuleGenerator(files.map(f => new Parser().parse(f)))
 
-  def apply(schema: Schema): Seq[Module] = {
+  def apply(schemata: Seq[Schema]): Seq[Module] = {
 
     val types = scala.collection.mutable.Map.empty[String, Module]
 
@@ -58,8 +57,10 @@ object ModuleGenerator {
       updated
     }
 
-    require(schema.getType == Schema.Type.RECORD)
-    recordFor(schema)
+    schemata.foreach { schema =>
+      require(schema.getType == Schema.Type.RECORD)
+    }
+    schemata.foreach(recordFor)
     types.values.toList
   }
 }
