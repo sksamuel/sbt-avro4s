@@ -29,7 +29,7 @@ object ModuleGenerator {
         case Schema.Type.BYTES => PrimitiveType.Bytes
         case Schema.Type.DOUBLE => PrimitiveType.Double
         case Schema.Type.ENUM => types.getOrElse(schema.getFullName, enumFor(schema))
-        case Schema.Type.FIXED => PrimitiveType.String
+        case Schema.Type.FIXED => types.getOrElse(schema.getFullName, fixedFor(schema))
         case Schema.Type.FLOAT => PrimitiveType.Float
         case Schema.Type.INT => PrimitiveType.Int
         case Schema.Type.LONG => PrimitiveType.Long
@@ -46,6 +46,12 @@ object ModuleGenerator {
       val enum = EnumType(schema.getNamespace, schema.getName, schema.getEnumSymbols.asScala.toList)
       types.put(schema.getFullName, enum)
       enum
+    }
+
+    def fixedFor(schema: Schema): FixedType = {
+      val fixed = FixedType(schema.getNamespace, schema.getName, schema.getFixedSize)
+      types.put(schema.getFullName, fixed)
+      fixed
     }
 
     def recordFor(schema: Schema): RecordType = {
@@ -77,6 +83,8 @@ case class RecordType(namespace: String, name: String, fields: Seq[FieldDef]) ex
 case class EnumType(namespace: String, name: String, symbols: Seq[String]) extends Module
 
 case class MapType(valueType: Type) extends Type
+
+case class FixedType(namespace: String, name: String, length: Int) extends Module
 
 case class PrimitiveType(baseType: String) extends Type
 
@@ -128,6 +136,7 @@ object TypeRenderer {
       case RecordType(namespace, name, _) => namespace + "." + name
       case EnumType(namespace, name, _) => namespace + "." + name
       case MapType(valueType) => s"Map[String, ${renderType(valueType)}]"
+      case FixedType(namespace, name, _) => namespace + "." + name
       case UnionType(Seq()) => "shapeless.CNil"
       case UnionType(Seq(NullType, right)) => s"Option[${renderType(right)}]"
       case UnionType(Seq(left, right)) if !forceCoproduct => s"Either[${renderType(left)}, ${renderType(right)}]"
