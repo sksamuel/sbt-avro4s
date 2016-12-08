@@ -21,6 +21,7 @@ lazy val root = (project in file(".")).
     licenses += ("MIT", url("https://opensource.org/licenses/MIT")),
     libraryDependencies ++= Seq(
       "org.apache.avro"       % "avro"                  % AvroVersion,
+      "org.apache.avro"       % "avro-compiler"         % AvroVersion,
       "org.scalatest"         %% "scalatest"            % ScalatestVersion % "test"
     ),
     publishMavenStyle := true,
