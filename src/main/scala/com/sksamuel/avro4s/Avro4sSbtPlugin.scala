@@ -49,10 +49,13 @@ object Avro4sSbtPlugin extends AutoPlugin {
       (resourceDirectory in avro2Class).value,
       (resourceManaged in avroIdl2Avro).value
     ),
+    resources in avro2Class := (resourceDirectories in avro2Class).value.flatMap(getRecursiveListOfFiles),
+
     sourceManaged in avro2Class := (sourceManaged in Compile).value / avroDirectoryName.value,
 
     resourceDirectory in avroIdl2Avro := (resourceDirectory in Compile).value / avroDirectoryName.value,
     resourceManaged in avroIdl2Avro := (resourceManaged in Compile).value / avroDirectoryName.value,
+    resources in avroIdl2Avro := getRecursiveListOfFiles((resourceDirectory in avroIdl2Avro).value),
 
     managedSourceDirectories in Compile <+= sourceManaged in avro2Class,
     managedResourceDirectories in Compile <+= resourceManaged in avroIdl2Avro,
@@ -75,7 +78,7 @@ object Avro4sSbtPlugin extends AutoPlugin {
     streams.value.log.info("--------------------------------------------------------------")
 
     val combinedFileFilter = inc -- exc
-    val allFiles = inDir.flatMap(getRecursiveListOfFiles)
+    val allFiles = (resources in avro2Class).value
     val schemaFiles = Option(allFiles.filter(combinedFileFilter.accept))
     streams.value.log.info(s"[sbt-avro4s] Found ${schemaFiles.fold(0)(_.length)} schemas")
     schemaFiles.map { f =>
@@ -102,7 +105,7 @@ object Avro4sSbtPlugin extends AutoPlugin {
     streams.value.log.info("--------------------------------------------------------------")
 
     val combinedFileFilter = inc -- exc
-    val allFiles = getRecursiveListOfFiles(inDir)
+    val allFiles = (resources in avroIdl2Avro).value
     val idlFiles = Option(allFiles.filter(combinedFileFilter.accept))
     streams.value.log.info(s"[sbt-avro4s] Found ${idlFiles.fold(0)(_.length)} IDLs")
 
