@@ -20,8 +20,9 @@ object TemplateGenerator {
     }
 
     // records can be grouped into a single file per package
-    val records = modules.collect {
+    val recordsAndFixedTypes = modules.collect {
       case record: RecordType => record
+      case fixed: FixedType => fixed
     }.groupBy(_.namespace).map { case (namespace, records) =>
       val defin = s"package $namespace\n\n" + records.map(renderer.apply).mkString("\n\n")
       Template(
@@ -31,6 +32,6 @@ object TemplateGenerator {
       )
     }
 
-    enums ++ records
+    enums ++ recordsAndFixedTypes
   }
 }
