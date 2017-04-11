@@ -14,9 +14,11 @@ object ModuleGenerator {
 
   def apply(in: InputStream): Seq[Module] = ModuleGenerator(Seq(new Parser().parse(in)))
   def apply(file: File): Seq[Module] = ModuleGenerator.fromFiles(Seq(file))
+
+  val parser = new Parser()
+
   def fromFiles(files: Seq[File]): Seq[Module] = ModuleGenerator {
-    val parser = new Parser()
-    files.map(parser.parse)
+    files.sortBy(_.getName).map(parser.parse)
   }
 
   def apply(schemata: Seq[Schema]): Seq[Module] = {
