@@ -14,10 +14,7 @@ object ModuleGenerator {
 
   def apply(in: InputStream): Seq[Module] = ModuleGenerator(Seq(new Parser().parse(in)))
   def apply(file: File): Seq[Module] = ModuleGenerator.fromFiles(Seq(file))
-  def fromFiles(files: Seq[File]): Seq[Module] = ModuleGenerator {
-    val parser = new Parser()
-    files.map(parser.parse)
-  }
+  def fromFiles(files: Seq[File]): Seq[Module] = ModuleGenerator(files.map(file => new Parser().parse(file)))
 
   def apply(schemata: Seq[Schema]): Seq[Module] = {
 

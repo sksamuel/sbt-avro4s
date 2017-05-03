@@ -1,0 +1,7 @@
+@namespace("com.sksamuel.avro4s.domain")
+protocol Shop {
+
+    record Product {
+        string productId;
+    }
+}
