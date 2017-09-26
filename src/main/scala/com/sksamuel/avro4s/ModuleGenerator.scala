@@ -33,7 +33,11 @@ object ModuleGenerator {
         case Schema.Type.ENUM => types.getOrElse(schema.getFullName, enumFor(schema))
         case Schema.Type.FIXED => types.getOrElse(schema.getFullName, fixedFor(schema))
         case Schema.Type.FLOAT => PrimitiveType.Float
+        case Schema.Type.INT if schema.getProp("logicalType") == "time-millis" => PrimitiveType.Time
         case Schema.Type.INT => PrimitiveType.Int
+        case Schema.Type.LONG if schema.getProp("logicalType") == "time-micros"=> PrimitiveType.Time
+        case Schema.Type.LONG if schema.getProp("logicalType") == "timestamp-millis"=> PrimitiveType.Instant
+        case Schema.Type.LONG if schema.getProp("logicalType") == "timestamp-micros"=> PrimitiveType.Instant
         case Schema.Type.LONG => PrimitiveType.Long
         case Schema.Type.MAP => MapType(schemaToType(schema.getValueType))
         case Schema.Type.NULL => NullType
@@ -100,6 +104,8 @@ object PrimitiveType {
   val Long = PrimitiveType("Long")
   val String = PrimitiveType("String")
   val Int = PrimitiveType("Int")
+  val Instant = PrimitiveType("java.time.Instant")
+  val Time = PrimitiveType("java.time.LocalTime")
   val Boolean = PrimitiveType("Boolean")
 }
 
