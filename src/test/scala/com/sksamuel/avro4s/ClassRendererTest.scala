@@ -16,6 +16,9 @@ class ClassRendererTest extends WordSpec with Matchers {
     "generate field for Boolean fields" in {
       fields should contain(FieldDef("aired", PrimitiveType("Boolean")))
     }
+    "generate field for Instant fields" in {
+      fields should contain(FieldDef("airedDate", PrimitiveType("java.time.Instant")))
+    }
     "generate field for Double fields" in {
       fields should contain(FieldDef("temperature", PrimitiveType("Double")))
     }
