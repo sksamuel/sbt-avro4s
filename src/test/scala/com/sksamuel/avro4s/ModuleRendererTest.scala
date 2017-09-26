@@ -5,6 +5,9 @@ import org.scalatest.{Matchers, WordSpec}
 class ModuleRendererTest extends WordSpec with Matchers {
 
   "new ModuleRenderer()" should {
+    "write field for Time" in {
+      new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("foo", PrimitiveType.Time)))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  foo: java.time.LocalTime\n)"
+    }
     "write field for Int" in {
       new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("foo", PrimitiveType.String)))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  foo: String\n)"
     }
@@ -16,6 +19,9 @@ class ModuleRendererTest extends WordSpec with Matchers {
     }
     "write field for doubles" in {
       new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("foo", PrimitiveType.Double)))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  foo: Double\n)"
+    }
+    "write field for Instant" in {
+      new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("foo", PrimitiveType.Instant)))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  foo: java.time.Instant\n)"
     }
     "write field for longs" in {
       new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("foo", PrimitiveType.Long)))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  foo: Long\n)"
@@ -57,9 +63,10 @@ class ModuleRendererTest extends WordSpec with Matchers {
       new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("name", UnionType(NullType, PrimitiveType.Int, PrimitiveType.Boolean))))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  name: Option[Either[Int, Boolean]]\n)"
     }
     "generate coproducts for union types of 3+ non-null types" in {
-      new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("name", UnionType(PrimitiveType.String, PrimitiveType.Int, PrimitiveType.Boolean))))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  name: shapeless.:+:[String, shapeless.:+:[Int, shapeless.:+:[Boolean, shapeless.CNil]]]\n)"
+      new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("name", UnionType(PrimitiveType.String, PrimitiveType.Int, PrimitiveType.Boolean))))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  name: shapeless.:+:[String, shapeless.:+:[Int, shapeless.:+:[Boolean, shapeless.CNil]]]\n)\n\n//auto generated code by avro4s\nobject MyClass {\n  type NameType = shapeless.:+:[String, shapeless.:+:[Int, shapeless.:+:[Boolean, shapeless.CNil]]]\n}"
     }
     "generate Option[coproducts] for union types of 3+ non-null types with null" in {
-      new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("name", UnionType(NullType, PrimitiveType.String, PrimitiveType.Int, PrimitiveType.Boolean))))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  name: Option[shapeless.:+:[String, shapeless.:+:[Int, shapeless.:+:[Boolean, shapeless.CNil]]]]\n)"
+      val actual = new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("name", UnionType(NullType, PrimitiveType.String, PrimitiveType.Int, PrimitiveType.Boolean)))))
+      actual shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  name: Option[shapeless.:+:[String, shapeless.:+:[Int, shapeless.:+:[Boolean, shapeless.CNil]]]]\n)\n\n//auto generated code by avro4s\nobject MyClass {\n  type NameType = Option[shapeless.:+:[String, shapeless.:+:[Int, shapeless.:+:[Boolean, shapeless.CNil]]]]\n}"
     }}
 }
