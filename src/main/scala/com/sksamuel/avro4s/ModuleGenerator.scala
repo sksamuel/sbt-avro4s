@@ -29,7 +29,6 @@ object ModuleGenerator {
     }
   }
 
-
   def apply(schemata: Seq[Schema]): Seq[Module] = {
 
     val types = scala.collection.mutable.Map.empty[String, Module]
@@ -76,10 +75,6 @@ object ModuleGenerator {
       types.put(schema.getFullName, updated)
       updated
     }
-
-//    schemata.foreach { schema =>
-//      require(schema.getType == Schema.Type.RECORD)
-//    }
 
     val flattened = schemata.flatMap(flattenSchema)
 
