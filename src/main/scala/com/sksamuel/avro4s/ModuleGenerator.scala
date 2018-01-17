@@ -14,9 +14,19 @@ object ModuleGenerator {
 
   def apply(in: InputStream): Seq[Module] = ModuleGenerator(Seq(new Parser().parse(in)))
   def apply(file: File): Seq[Module] = ModuleGenerator.fromFiles(Seq(file))
-  def fromFiles(files: Seq[File]): Seq[Module] = ModuleGenerator {
+
+  def fromFiles(files: Seq[File]): Seq[Module] = {
     val parser = new Parser()
-    files.map(parser.parse)
+    ModuleGenerator {
+      files.sortBy(_.getName).map(parser.parse)
+    }
+  }
+
+  def fromSchemas(schemas: Seq[String]): Seq[Module] = {
+    val parser = new Parser()
+    ModuleGenerator {
+      schemas.map(parser.parse)
+    }
   }
 
   def apply(schemata: Seq[Schema]): Seq[Module] = {
@@ -66,11 +76,20 @@ object ModuleGenerator {
       updated
     }
 
-    schemata.foreach { schema =>
-      require(schema.getType == Schema.Type.RECORD)
-    }
-    schemata.foreach(recordFor)
+    val flattened = schemata.flatMap(flattenSchema)
+
+    flattened.foreach(recordFor)
     types.values.toList
+  }
+
+  /**
+    * A schema can be a union of schemas, but the ModuleGenerator does not support this, so we flatten the UNIONs first.
+    */
+  private[this] def flattenSchema(schema: Schema) = {
+    schema.getType match {
+      case Schema.Type.UNION => schema.getTypes.asScala.toList
+      case _ => List(schema)
+    }
   }
 }
 

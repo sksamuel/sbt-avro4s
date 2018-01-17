@@ -2,13 +2,17 @@ package com.sksamuel.avro4s
 
 import java.nio.file.{Files, Paths}
 
+import com.sksamuel.avro4s.util.TopologicalSort
+import com.sun.nio.zipfs.ZipFileSystemProvider
 import org.apache.avro.Protocol
 import org.apache.avro.Schema.{Type => AvroType}
+import play.api.libs.json.{JsArray, JsNull, JsString, Json}
 import sbt.Keys._
 import sbt._
-import plugins._
+import sbt.plugins._
 
-import collection.JavaConverters._
+import scala.collection.JavaConverters._
+import scala.util.control.NonFatal
 
 object Import {
 
@@ -16,6 +20,8 @@ object Import {
   lazy val avroIdl2Avro = taskKey[Seq[File]]("Generate avro schema files from avro IDL; is a resource generator")
 
   object Avro4sKeys {
+    val avroSchemaFiles = SettingKey[Seq[String]]("Avro schema files to compile")
+
     val avroDirectoryName = SettingKey[String]("Recurrent directory name used for lookup and output")
     val avroFileEnding = SettingKey[String]("File ending of avro schema files, used for lookup and output")
     val avroIdlFileEnding = SettingKey[String]("File ending of avro IDL files, used for lookup and output")
@@ -34,22 +40,24 @@ object Avro4sSbtPlugin extends AutoPlugin {
   import autoImport._
   import Avro4sKeys._
 
+  case class SchemaSource(
+    path: String,
+    uri: URI,
+    content: String,
+    includes: Seq[String]
+  )
+
   override def projectSettings = Seq(
     avroDirectoryName := "avro",
     avroFileEnding := "avsc",
     avroIdlFileEnding := "avdl",
+    avroSchemaFiles in avro2Class := Seq.empty,
 
-    includeFilter in avro2Class := s"*.${avroFileEnding.value}",
-    excludeFilter in avro2Class := HiddenFileFilter || FileFilter.globFilter("_*"),
-    includeFilter in avroIdl2Avro := s"*.${avroIdlFileEnding.value}",
-    excludeFilter in avroIdl2Avro := HiddenFileFilter || FileFilter.globFilter("_*"),
-
-    resourceDirectory in avro2Class := (resourceDirectory in Compile).value / avroDirectoryName.value,
+    resourceDirectory in avro2Class := (resourceDirectory in Compile).value,
     resourceDirectories in avro2Class := Seq(
       (resourceDirectory in avro2Class).value,
       (resourceManaged in avroIdl2Avro).value
     ),
-    resources in avro2Class := (resourceDirectories in avro2Class).value.flatMap(getRecursiveListOfFiles),
 
     sourceManaged in avro2Class := (sourceManaged in Compile).value / avroDirectoryName.value,
 
@@ -69,28 +77,142 @@ object Avro4sSbtPlugin extends AutoPlugin {
 
   private def runAvro2Class: Def.Initialize[Task[Seq[File]]] = Def.task {
 
-    val inc = (includeFilter in avro2Class).value
-    val exc = (excludeFilter in avro2Class).value || DirectoryFilter
     val inDir = (resourceDirectories in avro2Class).value
     val outDir = (sourceManaged in avro2Class).value
 
-    streams.value.log.info(s"[sbt-avro4s] Generating sources from [${inDir}]")
+    streams.value.log.info(s"[sbt-avro4s] Generating sources from [$inDir]")
     streams.value.log.info("--------------------------------------------------------------")
 
-    val combinedFileFilter = inc -- exc
-    val allFiles = (resources in avro2Class).value
-    val schemaFiles = Option(allFiles.filter(combinedFileFilter.accept))
-    streams.value.log.info(s"[sbt-avro4s] Found ${schemaFiles.fold(0)(_.length)} schemas")
-    schemaFiles.map { f =>
-      val defs = ModuleGenerator.fromFiles(f)
-      streams.value.log.info(s"[sbt-avro4s] Generated ${defs.length} classes")
+    val resourceDirs = (resourceDirectories in avro2Class).all(ScopeFilter(inAnyProject)).value.flatten
 
-      val paths = FileRenderer.render(outDir.toPath, TemplateGenerator.apply(defs))
-      streams.value.log.info(s"[sbt-avro4s] Wrote class files to [${outDir.toPath}]")
+    val classpath = (dependencyClasspath in Compile).value
 
-      paths
-    }.getOrElse(Seq()).map(_.toFile)
+    val schemaFilesUnsorted = loadSchemaFiles((avroSchemaFiles in avro2Class).value, resourceDirs, classpath)
+    val schemaFiles = sortSchemas(schemaFilesUnsorted)
+
+    streams.value.log.info(s"""[sbt-avro4s] Found ${schemaFiles.length} schemas at:\n - ${schemaFiles.map(s => s.path + " at " + s.uri).mkString("\n - ")}""")
+
+    val defs = ModuleGenerator.fromSchemas(schemaFiles.map(_.content))
+    streams.value.log.info(s"[sbt-avro4s] Generated ${defs.length} classes")
+
+    val paths = FileRenderer.render(outDir.toPath, TemplateGenerator.apply(defs))
+    streams.value.log.info(s"[sbt-avro4s] Wrote class files to [${outDir.toPath}]")
+
+    paths.map(_.toFile)
   } dependsOn avroIdl2Avro
+
+  /**
+    * Sort schema's in topological order.
+    * @param schemas schemas to sort
+    * @return
+    */
+  private def sortSchemas(schemas: Seq[SchemaSource]): Seq[SchemaSource] = {
+
+    val byPath = schemas.map(s => s.path -> s).toMap
+
+    val edges = for {
+      schema <- schemas
+      include <- schema.includes
+    } yield byPath(include) -> schema
+
+    try {
+      TopologicalSort.sort(util.Graph(edges))
+    } catch {
+      case NonFatal(_) =>
+        throw new RuntimeException(s"""Cyclic dependencies detected in avro schemas:\b -  ${schemas.map(s => s.path + " at " + s.uri).mkString("\n - ")}""")
+    }
+  }
+
+  private def loadSchemaFiles(rootPaths: Seq[String], resourceDirs: Seq[File], classPath: Classpath): Seq[SchemaSource] = {
+
+    def recurse(paths: Seq[String], srcOpt: Option[SchemaSource], found: Map[String, SchemaSource]) : Map[String, SchemaSource] = {
+
+      val resolvedIncludes = for {
+        includePath <- paths
+        resolvedOpt = resolveInFileSystem(includePath, resourceDirs).orElse(resolveInClasspath(includePath, classPath))
+        resolved = resolvedOpt.getOrElse {
+          val msg = srcOpt.map { src =>
+            s"Included path $includePath in schema ${src.uri} not found"
+          }.getOrElse(s"Root path $includePath not found")
+
+          throw new RuntimeException(msg)
+        }
+      } yield resolved
+
+      resolvedIncludes.foldLeft(found)( (f, r) =>
+
+        if (f.contains(r.path)) f
+        else recurse(r.includes, Some(r), f + (r.path -> r))
+      )
+    }
+
+    recurse(rootPaths, None, Map.empty).values.toSeq
+  }
+
+  private def resolveIncludePaths(schema: String): Seq[String] = {
+    val json = Json.parse(schema)
+
+    val includes = (json \\ "include").flatMap {
+      case JsString(include) => Seq(include)
+      case JsArray(values) => values.collect {
+        case JsString(include) => include
+      }
+      case JsNull => Seq.empty
+      case other => throw new RuntimeException(s"Illegal include value $other. Expected a string, an array of strings or null.")
+    }
+
+    includes
+  }
+
+  private def resolveInFileSystem(path: String, resourceDirs: Seq[File]): Option[SchemaSource] = {
+    val files = resourceDirs.flatMap { dir =>
+      val file = dir.toPath.resolve(new File(path).toPath).toFile
+      if (file.exists()) {
+        Some(file)
+      } else {
+        None
+      }
+    }.distinct
+
+    if (files.isEmpty) {
+      None
+    } else if (files.lengthCompare(1) == 0) {
+      files.headOption.map { file =>
+        val content = new String(Files.readAllBytes(file.toPath), "UTF-8")
+        SchemaSource(path, file.toURI, content, resolveIncludePaths(content))
+      }
+
+    } else {
+      throw new RuntimeException(s"Found more than one schema file for path $path at ${files.mkString(", ")}")
+    }
+  }
+
+  private def resolveInClasspath(path: String, classpath: Classpath): Option[SchemaSource] = {
+    val files = classpath.filter(_.data.isFile).flatMap { jar =>
+      import scala.collection.JavaConverters._
+
+      val zip = new ZipFileSystemProvider().newFileSystem(jar.data.toPath, Map.empty[String, Int].asJava)
+
+      try {
+        val p = zip.getPath(path)
+        if (Files.exists(p)) {
+          val content = new String(Files.readAllBytes(p), "UTF-8")
+          Some(SchemaSource(path, p.toUri, content, resolveIncludePaths(content)))
+        } else {
+          None
+        }
+      } finally {
+        zip.close()
+      }
+    }
+    if (files.isEmpty) {
+      None
+    } else if (files.lengthCompare(1) == 0) {
+      files.headOption
+    } else {
+      throw new RuntimeException(s"Found more than one schema file for path $path at ${files.mkString(", ")}")
+    }
+  }
 
   private def runAvroIdl2Avro: Def.Initialize[Task[Seq[File]]] = Def.task {
     import org.apache.avro.compiler.idl.Idl
@@ -101,7 +223,7 @@ object Avro4sSbtPlugin extends AutoPlugin {
     val outDir = (resourceManaged in avroIdl2Avro).value
     val outExt = s".${avroFileEnding.value}"
 
-    streams.value.log.info(s"[sbt-avro4s] Generating sources from [${inDir}]")
+    streams.value.log.info(s"[sbt-avro4s] Generating sources from [$inDir]")
     streams.value.log.info("--------------------------------------------------------------")
 
     val combinedFileFilter = inc -- exc
@@ -117,7 +239,7 @@ object Avro4sSbtPlugin extends AutoPlugin {
         idl.close()
         protocolSchemata.asScala
       }
-      ).toSeq
+      )
     }.getOrElse(Seq())
 
     val uniqueSchemata = schemata.groupBy(_.getFullName).mapValues { identicalSchemata =>
