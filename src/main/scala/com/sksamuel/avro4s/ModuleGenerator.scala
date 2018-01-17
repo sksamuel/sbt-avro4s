@@ -22,6 +22,14 @@ object ModuleGenerator {
     }
   }
 
+  def fromSchemas(schemas: Seq[String]): Seq[Module] = {
+    val parser = new Parser()
+    ModuleGenerator {
+      schemas.map(parser.parse)
+    }
+  }
+
+
   def apply(schemata: Seq[Schema]): Seq[Module] = {
 
     val types = scala.collection.mutable.Map.empty[String, Module]
@@ -69,11 +77,24 @@ object ModuleGenerator {
       updated
     }
 
-    schemata.foreach { schema =>
-      require(schema.getType == Schema.Type.RECORD)
-    }
-    schemata.foreach(recordFor)
+//    schemata.foreach { schema =>
+//      require(schema.getType == Schema.Type.RECORD)
+//    }
+
+    val flattened = schemata.flatMap(flattenSchema)
+
+    flattened.foreach(recordFor)
     types.values.toList
+  }
+
+  /**
+    * A schema can be a union of schemas, but the ModuleGenerator does not support this, so we flatten the UNIONs first.
+    */
+  private[this] def flattenSchema(schema: Schema) = {
+    schema.getType match {
+      case Schema.Type.UNION => schema.getTypes.asScala.toList
+      case _ => List(schema)
+    }
   }
 }
 

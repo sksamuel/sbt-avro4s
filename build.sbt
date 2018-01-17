@@ -22,6 +22,7 @@ lazy val root = (project in file(".")).
     libraryDependencies ++= Seq(
       "org.apache.avro"       % "avro"                  % AvroVersion,
       "org.apache.avro"       % "avro-compiler"         % AvroVersion,
+      "com.typesafe.play"     %% "play-json"            % "2.6.8",
       "org.scalatest"         %% "scalatest"            % ScalatestVersion % "test"
     ),
     publishMavenStyle := true,
