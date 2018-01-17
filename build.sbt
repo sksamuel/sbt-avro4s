@@ -2,18 +2,17 @@ import com.typesafe.sbt.pgp.PgpKeys
 import sbt._
 import sbt.Keys._
 
-val AvroVersion = "1.8.1"
+val AvroVersion = "1.8.0"
 val ScalatestVersion = "3.0.0"
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.10.6",
+  scalaVersion := "2.12.4",
   organization := "com.sksamuel.avro4s",
   scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf8"),
-  javacOptions ++= Seq("-source", "1.7", "-target", "1.7")
+  javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 )
 
 lazy val root = (project in file(".")).
-  settings(ScriptedPlugin.scriptedSettings).
   settings(commonSettings: _*).
   settings(
     name := "sbt-avro4s",
@@ -38,13 +37,12 @@ lazy val root = (project in file(".")).
 
     resolvers := ("releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2") +: resolvers.value,
 
-    publishTo <<= version {
-      (v: String) =>
-        val nexus = "https://oss.sonatype.org/"
-        if (v.trim.endsWith("SNAPSHOT"))
-          Some("snapshots" at nexus + "content/repositories/snapshots")
-        else
-          Some("releases" at nexus + "service/local/staging/deploy/maven2")
+    publishTo := {
+      val nexus = "https://oss.sonatype.org/"
+      if (isSnapshot.value)
+        Some("snapshots" at nexus + "content/repositories/snapshots") 
+      else
+        Some("releases"  at nexus + "service/local/staging/deploy/maven2")
     },
 
     pomExtra := {

@@ -16,9 +16,9 @@ object Import {
   lazy val avroIdl2Avro = taskKey[Seq[File]]("Generate avro schema files from avro IDL; is a resource generator")
 
   object Avro4sKeys {
-    val avroDirectoryName = SettingKey[String]("Recurrent directory name used for lookup and output")
-    val avroFileEnding = SettingKey[String]("File ending of avro schema files, used for lookup and output")
-    val avroIdlFileEnding = SettingKey[String]("File ending of avro IDL files, used for lookup and output")
+    val avroDirectoryName = settingKey[String]("Recurrent directory name used for lookup and output")
+    val avroFileEnding = settingKey[String]("File ending of avro schema files, used for lookup and output")
+    val avroIdlFileEnding = settingKey[String]("File ending of avro IDL files, used for lookup and output")
   }
 
 }
@@ -57,8 +57,8 @@ object Avro4sSbtPlugin extends AutoPlugin {
     resourceManaged in avroIdl2Avro := (resourceManaged in Compile).value / avroDirectoryName.value,
     resources in avroIdl2Avro := getRecursiveListOfFiles((resourceDirectory in avroIdl2Avro).value),
 
-    managedSourceDirectories in Compile <+= sourceManaged in avro2Class,
-    managedResourceDirectories in Compile <+= resourceManaged in avroIdl2Avro,
+    managedSourceDirectories in Compile += (sourceManaged in avro2Class).value,
+    managedResourceDirectories in Compile += (resourceManaged in avroIdl2Avro).value,
 
     avro2Class := runAvro2Class.value,
     avroIdl2Avro := runAvroIdl2Avro.value,

@@ -9,7 +9,7 @@ Sbt plugin to use avro4s to generate case classes from avro schemas
 * Add the plugin to your build, eg in `project/plugins.sbt` add this line:
 
 ```scala
- addSbtPlugin("com.sksamuel.avro4s" % "sbt-avro4s" % "1.0.0")
+ addSbtPlugin("com.sksamuel.avro4s" % "sbt-avro4s" % "1.0.2-SNAPSHOT")
 ```
 
 ## Version Compatibility
