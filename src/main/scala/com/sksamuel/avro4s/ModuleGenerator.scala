@@ -9,7 +9,6 @@ import org.apache.avro.Schema.Parser
 import scala.reflect.internal.SymbolTable
 
 object ModuleGenerator {
-
   import scala.collection.JavaConverters._
 
   def apply(in: InputStream): Seq[Module] = ModuleGenerator(Seq(new Parser().parse(in)))
@@ -66,10 +65,16 @@ object ModuleGenerator {
       updated
     }
 
-    schemata.foreach { schema =>
-      require(schema.getType == Schema.Type.RECORD)
-    }
-    schemata.foreach(recordFor)
+    def dispatch(schemata: Seq[Schema]): Unit =
+      schemata.foreach { schema =>
+        schema.getType match {
+          case Schema.Type.RECORD => recordFor(schema)
+          case Schema.Type.UNION => dispatch(schema.getTypes.asScala)
+          case invalidSchema => throw new IllegalArgumentException(s"Found invalid top-level schema type ${invalidSchema}!")
+        }
+      }
+
+    dispatch(schemata)
     types.values.toList
   }
 }
@@ -106,6 +111,7 @@ object PrimitiveType {
 case class ArrayType(arrayType: Type) extends Type
 
 case class UnionType(types: Seq[Type]) extends Type
+
 object UnionType {
   def apply(ts: Type*)(implicit dummy: DummyImplicit): UnionType = UnionType(ts)
 }
