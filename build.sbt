@@ -24,6 +24,8 @@ lazy val root = (project in file(".")).
       "org.scalatest"         %% "scalatest"            % ScalatestVersion % "test"
     ),
     publishMavenStyle := true,
+    SbtPgp.autoImport.useGpgAgent := true,
+    SbtPgp.autoImport.useGpg := true,
     sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
     sbtrelease.ReleasePlugin.autoImport.releaseCrossBuild := false,
     publishArtifact in Test := false,
