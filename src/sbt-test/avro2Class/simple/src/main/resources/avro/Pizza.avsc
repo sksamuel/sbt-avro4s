@@ -2,6 +2,7 @@
   "type" : "record",
   "name" : "Pizza",
   "namespace" : "com.sksamuel.avro4s.json",
+  "include" : "avro/Ingredient.avsc",
   "fields" : [ {
     "name" : "name",
     "type" : "string"
@@ -9,20 +10,7 @@
     "name" : "ingredients",
     "type" : {
       "type" : "array",
-      "items" : {
-        "type" : "record",
-        "name" : "Ingredient",
-        "fields" : [ {
-          "name" : "name",
-          "type" : "string"
-        }, {
-          "name" : "sugar",
-          "type" : "double"
-        }, {
-          "name" : "fat",
-          "type" : "double"
-        } ]
-      }
+      "items" : "Ingredient"
     }
   }, {
     "name" : "vegetarian",

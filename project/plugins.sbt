@@ -1,9 +1,7 @@
 resolvers += Classpaths.sbtPluginReleases
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-pgp" % "0.8.3")
+addSbtPlugin("com.simacan" % "services-parent" % "0.6.0-SNAPSHOT")
 
-libraryDependencies <+= (sbtVersion) { sv =>
-  "org.scala-sbt" % "scripted-plugin" % sv
+libraryDependencies += {
+  "org.scala-sbt" %% "scripted-plugin" % sbtVersion.value
 }
-
-addSbtPlugin("com.github.gseitz" % "sbt-release" % "1.0.3")

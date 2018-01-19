@@ -1,2 +1,2 @@
 > avro2Class
-$ exists target/scala-2.10/src_managed/main/schemas/com/sksamuel/avro4s/json/domain/scala
+$ exists target/scala-2.12/src_managed/main/avro/com/sksamuel/avro4s/json/domain.scala

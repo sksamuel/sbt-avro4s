@@ -43,6 +43,7 @@ Also see `src/sbt-test/avro2Class` for examples.
 
 Option                                  | Description
 ----------------------------------------|----------------------------------------
+avroSchemaFiles                         | Schema files (paths) to compile.
 avroDirectoryName                       | Directory name used for output
 avroFileEnding                          | File ending of avro files, used for output
 resourceDirectory in avro2Class         | Input directory for the avro2Class task

@@ -1,2 +1,0 @@
-> compile:managedSources
-$ exists target/scala-2.10/src_managed/main/avro/com/sksamuel/avro4s/json/domain/scala

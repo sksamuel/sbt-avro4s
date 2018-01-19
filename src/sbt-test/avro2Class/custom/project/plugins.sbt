@@ -3,5 +3,5 @@
   if(pluginVersion == null)
     throw new RuntimeException("""|The system property 'plugin.version' is not defined.
       |Specify this property using the scriptedLaunchOpts -D.""".stripMargin)
-  else addSbtPlugin("com.sksamuel.avro4s" % "sbt-avro4s" % pluginVersion)
+  else addSbtPlugin("com.simacan" % "sbt-avro4s" % pluginVersion)
 }
