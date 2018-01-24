@@ -1,0 +1,11 @@
+@namespace("com.sksamuel.avro4s.domain")
+protocol Shop {
+
+    import idl "Product.avdl";
+
+    record Discount {
+        array<com.sksamuel.avro4s.domain.Product> product;
+        long from;
+        long to;
+    }
+}
