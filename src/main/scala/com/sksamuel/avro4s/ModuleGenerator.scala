@@ -14,8 +14,16 @@ object ModuleGenerator {
   def apply(in: InputStream): Seq[Module] = ModuleGenerator(Seq(new Parser().parse(in)))
   def apply(file: File): Seq[Module] = ModuleGenerator.fromFiles(Seq(file))
   def fromFiles(files: Seq[File]): Seq[Module] = ModuleGenerator {
-    val parser = new Parser()
-    files.map(parser.parse)
+    val unmanagedParser = new Parser()
+    def managed(file: File): Boolean = {
+      file.getPath.contains("resource_managed")
+    }
+    files.map({ file =>
+      if (managed(file))
+        new Parser().parse(file)
+      else
+        unmanagedParser.parse(file)
+    })
   }
 
   def apply(schemata: Seq[Schema]): Seq[Module] = {
