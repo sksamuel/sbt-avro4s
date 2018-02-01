@@ -1,0 +1,25 @@
+{
+  "type" : "record",
+  "name" : "B",
+  "namespace" : "com.sksamuel.avro4s.json",
+  "fields" : [ {
+    "name" : "name",
+    "type" : "string"
+  }, {
+    "name" : "a",
+    "type" : "A"
+  }, {
+    "name" : "c",
+    "type": {
+      "name" : "C",
+      "type" : "record",
+      "fields" : [ {
+        "name" : "name",
+        "type" : "string"
+      } ]
+    }
+  }, {
+    "name" : "anotherC",
+    "type" : "C"
+  } ]
+}
