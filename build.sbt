@@ -6,7 +6,6 @@ val AvroVersion = "1.8.0"
 val ScalatestVersion = "3.0.0"
 
 lazy val commonSettings = Seq(
-  scalaVersion := "2.12.4",
   organization := "com.sksamuel.avro4s",
   scalacOptions := Seq("-unchecked", "-deprecation", "-feature", "-encoding", "utf8"),
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
@@ -36,6 +35,8 @@ lazy val root = (project in file(".")).
       "-Dplugin.version=" + version.value
     )},
     scriptedBufferLog := false,
+
+    crossSbtVersions := Vector("0.13.16", "1.0.4"),
 
     resolvers := ("releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2") +: resolvers.value,
 
