@@ -1,0 +1,16 @@
+@namespace("com.sksamuel.avro4s.json")
+protocol Pizza {
+  record Ingredient {
+    string name;
+    double sugar;
+    double fat;
+  }
+
+  record Pizza {
+    string name;
+    array<Ingredient> ingredients;
+    boolean vegetarian;
+    boolean vegan;
+    int calories;
+  }
+}
