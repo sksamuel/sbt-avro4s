@@ -1,4 +1,4 @@
-@namespace("com.sksamuel.avro4s.domain")
+@namespace("com.sksamuel.avro4s.json")
 protocol Shop {
 
     record Product {
