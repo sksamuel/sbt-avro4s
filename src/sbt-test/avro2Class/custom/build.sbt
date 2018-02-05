@@ -8,5 +8,6 @@ lazy val root = (project in file("."))
     version := "0.1",
     scalaVersion := "2.10.5",
     avroDirectoryName := "schemas",
-    avroFileEnding := "avro"
+    avroFileEnding := "avro",
+    avroUseTypeRepetition := true
   )

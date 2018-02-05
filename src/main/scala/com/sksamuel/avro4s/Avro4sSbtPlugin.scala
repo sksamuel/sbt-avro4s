@@ -19,6 +19,7 @@ object Import {
     val avroDirectoryName = settingKey[String]("Recurrent directory name used for lookup and output")
     val avroFileEnding = settingKey[String]("File ending of avro schema files, used for lookup and output")
     val avroIdlFileEnding = settingKey[String]("File ending of avro IDL files, used for lookup and output")
+    val avroUseTypeRepetition = settingKey[Boolean]("Whether to use type repetition for referenced types in your avro schema files. False means you can reference types by name in the type field, True means type schemas must be fully repeated in places they are referenced")
   }
 
 }
@@ -38,6 +39,7 @@ object Avro4sSbtPlugin extends AutoPlugin {
     avroDirectoryName := "avro",
     avroFileEnding := "avsc",
     avroIdlFileEnding := "avdl",
+    avroUseTypeRepetition := false,
 
     includeFilter in avro2Class := s"*.${avroFileEnding.value}",
     excludeFilter in avro2Class := HiddenFileFilter || FileFilter.globFilter("_*"),
@@ -77,9 +79,11 @@ object Avro4sSbtPlugin extends AutoPlugin {
     val combinedFileFilter = inc -- exc
     val managedFiles = (managedResources in avro2Class).value.filter(combinedFileFilter.accept)
     val unmanagedFiles = (unmanagedResources in avro2Class).value.filter(combinedFileFilter.accept)
+    val unmanagedParserType = if (avroUseTypeRepetition.value) ModuleGenerator.multipleParsers _ else ModuleGenerator.singleParser _
+
     val schemaFiles = managedFiles ++ unmanagedFiles
     streams.value.log.info(s"[sbt-avro4s] Found ${schemaFiles.length} schemas")
-    val defs = ModuleGenerator.fromManaged(managedFiles) ++ ModuleGenerator.fromUnmanaged(unmanagedFiles)
+    val defs = ModuleGenerator.multipleParsers(managedFiles) ++ unmanagedParserType(unmanagedFiles)
     streams.value.log.info(s"[sbt-avro4s] Generated ${defs.length} classes")
 
     val paths = FileRenderer.render(outDir.toPath, TemplateGenerator.apply(defs))

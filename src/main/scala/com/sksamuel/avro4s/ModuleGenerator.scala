@@ -12,11 +12,11 @@ object ModuleGenerator {
   import scala.collection.JavaConverters._
 
   def apply(in: InputStream): Seq[Module] = ModuleGenerator(Seq(new Parser().parse(in)))
-  def apply(file: File): Seq[Module] = ModuleGenerator.fromUnmanaged(Seq(file))
-  def fromManaged(files: Seq[File]): Seq[Module] = ModuleGenerator {
+  def apply(file: File): Seq[Module] = ModuleGenerator.singleParser(Seq(file))
+  def multipleParsers(files: Seq[File]): Seq[Module] = ModuleGenerator {
     files.map(new Parser().parse(_))
   }
-  def fromUnmanaged(files: Seq[File]): Seq[Module] = ModuleGenerator {
+  def singleParser(files: Seq[File]): Seq[Module] = ModuleGenerator {
     val unmanagedParser = new Parser()
     files.map(unmanagedParser.parse(_))
   }
