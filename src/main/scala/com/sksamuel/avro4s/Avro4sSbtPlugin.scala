@@ -45,11 +45,8 @@ object Avro4sSbtPlugin extends AutoPlugin {
     excludeFilter in avroIdl2Avro := HiddenFileFilter || FileFilter.globFilter("_*"),
 
     resourceDirectory in avro2Class := (resourceDirectory in Compile).value / avroDirectoryName.value,
-    resourceDirectories in avro2Class := Seq(
-      (resourceDirectory in avro2Class).value,
-      (resourceManaged in avroIdl2Avro).value
-    ),
-    resources in avro2Class := (resourceDirectories in avro2Class).value.flatMap(getRecursiveListOfFiles),
+    managedResources in avro2Class := getRecursiveListOfFiles((resourceManaged in avroIdl2Avro).value),
+    unmanagedResources in avro2Class := getRecursiveListOfFiles((resourceDirectory in avro2Class).value),
 
     sourceManaged in avro2Class := (sourceManaged in Compile).value / avroDirectoryName.value,
 
@@ -71,25 +68,24 @@ object Avro4sSbtPlugin extends AutoPlugin {
 
     val inc = (includeFilter in avro2Class).value
     val exc = (excludeFilter in avro2Class).value || DirectoryFilter
-    val inDir = (resourceDirectories in avro2Class).value
+    val inDir = Seq((resourceDirectory in avro2Class).value, (resourceManaged in avroIdl2Avro).value)
     val outDir = (sourceManaged in avro2Class).value
 
     streams.value.log.info(s"[sbt-avro4s] Generating sources from [${inDir}]")
     streams.value.log.info("--------------------------------------------------------------")
 
     val combinedFileFilter = inc -- exc
-    val allFiles = (resources in avro2Class).value
-    val schemaFiles = Option(allFiles.filter(combinedFileFilter.accept))
-    streams.value.log.info(s"[sbt-avro4s] Found ${schemaFiles.fold(0)(_.length)} schemas")
-    schemaFiles.map { f =>
-      val defs = ModuleGenerator.fromFiles(f)
-      streams.value.log.info(s"[sbt-avro4s] Generated ${defs.length} classes")
+    val managedFiles = (managedResources in avro2Class).value.filter(combinedFileFilter.accept)
+    val unmanagedFiles = (unmanagedResources in avro2Class).value.filter(combinedFileFilter.accept)
+    val schemaFiles = managedFiles ++ unmanagedFiles
+    streams.value.log.info(s"[sbt-avro4s] Found ${schemaFiles.length} schemas")
+    val defs = ModuleGenerator.fromManaged(managedFiles) ++ ModuleGenerator.fromUnmanaged(unmanagedFiles)
+    streams.value.log.info(s"[sbt-avro4s] Generated ${defs.length} classes")
 
-      val paths = FileRenderer.render(outDir.toPath, TemplateGenerator.apply(defs))
-      streams.value.log.info(s"[sbt-avro4s] Wrote class files to [${outDir.toPath}]")
+    val paths = FileRenderer.render(outDir.toPath, TemplateGenerator.apply(defs))
+    streams.value.log.info(s"[sbt-avro4s] Wrote class files to [${outDir.toPath}]")
 
-      paths
-    }.getOrElse(Seq()).map(_.toFile)
+    paths.map(_.toFile)
   } dependsOn avroIdl2Avro
 
   private def runAvroIdl2Avro: Def.Initialize[Task[Seq[File]]] = Def.task {

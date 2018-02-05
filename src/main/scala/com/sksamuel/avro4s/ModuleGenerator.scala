@@ -12,18 +12,13 @@ object ModuleGenerator {
   import scala.collection.JavaConverters._
 
   def apply(in: InputStream): Seq[Module] = ModuleGenerator(Seq(new Parser().parse(in)))
-  def apply(file: File): Seq[Module] = ModuleGenerator.fromFiles(Seq(file))
-  def fromFiles(files: Seq[File]): Seq[Module] = ModuleGenerator {
+  def apply(file: File): Seq[Module] = ModuleGenerator.fromUnmanaged(Seq(file))
+  def fromManaged(files: Seq[File]): Seq[Module] = ModuleGenerator {
+    files.map(new Parser().parse(_))
+  }
+  def fromUnmanaged(files: Seq[File]): Seq[Module] = ModuleGenerator {
     val unmanagedParser = new Parser()
-    def managed(file: File): Boolean = {
-      file.getPath.contains("resource_managed")
-    }
-    files.map({ file =>
-      if (managed(file))
-        new Parser().parse(file)
-      else
-        unmanagedParser.parse(file)
-    })
+    files.map(unmanagedParser.parse(_))
   }
 
   def apply(schemata: Seq[Schema]): Seq[Module] = {
