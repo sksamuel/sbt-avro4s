@@ -1,0 +1,15 @@
+@namespace("com.sksamuel.avro4s.json")
+protocol Shop {
+
+    enum Category {
+      HOME,
+      DIGITAL,
+      PET,
+      ELECTRONICS
+    }
+
+    record Product {
+        string productId;
+        Category category;
+    }
+}

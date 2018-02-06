@@ -33,5 +33,31 @@
   }, {
     "name" : "calories",
     "type" : "int"
+  }, {
+    "name": "instructions",
+    "type": {
+      "name": "Instructions",
+      "namespace" : "com.sksamuel.avro4s.json",
+      "type": "record",
+      "fields": [
+        {
+          "name": "step",
+          "type": {
+            "type": "record",
+            "name": "Step",
+            "fields": [
+              {
+                "name": "time",
+                "type": "int"
+              },
+              {
+                "name": "temperature",
+                "type": "int"
+              }
+            ]
+          }
+        }
+      ]
+    }
   } ]
 }

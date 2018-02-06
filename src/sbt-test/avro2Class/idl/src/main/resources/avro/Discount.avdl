@@ -1,0 +1,11 @@
+@namespace("com.sksamuel.avro4s.json")
+protocol Shop {
+
+    import idl "Product.avdl";
+
+    record Discount {
+        array<com.sksamuel.avro4s.json.Product> product;
+        long from;
+        long to;
+    }
+}
