@@ -2,7 +2,7 @@ import com.typesafe.sbt.pgp.PgpKeys
 import sbt._
 import sbt.Keys._
 
-val AvroVersion = "1.8.0"
+val AvroVersion = "1.8.2"
 val ScalatestVersion = "3.0.0"
 
 lazy val commonSettings = Seq(
