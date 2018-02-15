@@ -5,6 +5,9 @@ import org.scalatest.{Matchers, WordSpec}
 class ModuleRendererTest extends WordSpec with Matchers {
 
   "new ModuleRenderer()" should {
+    "write field for Time" in {
+      new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("foo", PrimitiveType.Time)))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  foo: java.time.LocalTime\n)"
+    }
     "write field for Int" in {
       new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("foo", PrimitiveType.String)))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  foo: String\n)"
     }
@@ -16,6 +19,9 @@ class ModuleRendererTest extends WordSpec with Matchers {
     }
     "write field for doubles" in {
       new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("foo", PrimitiveType.Double)))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  foo: Double\n)"
+    }
+    "write field for Instant" in {
+      new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("foo", PrimitiveType.Instant)))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  foo: java.time.Instant\n)"
     }
     "write field for longs" in {
       new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("foo", PrimitiveType.Long)))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  foo: Long\n)"

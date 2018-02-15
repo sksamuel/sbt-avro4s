@@ -5,6 +5,6 @@ protocol Shop {
 
     record Order {
         array<com.sksamuel.avro4s.json.Product> product;
-        long occurredOn;
+        timestamp_ms occurredOn;
     }
 }
