@@ -11,6 +11,22 @@ lazy val commonSettings = Seq(
   javacOptions ++= Seq("-source", "1.8", "-target", "1.8")
 )
 
+import ReleaseTransformations._
+lazy val releaseSteps = Seq[ReleaseStep](
+  checkSnapshotDependencies,
+  inquireVersions,
+  runClean,
+  releaseStepCommandAndRemaining("^ test"),
+  setReleaseVersion,
+  commitReleaseVersion,
+  tagRelease,
+  publishArtifacts,
+  releaseStepCommandAndRemaining("^ publishSigned"),
+  setNextVersion,
+  commitNextVersion,
+  pushChanges
+)
+
 lazy val root = (project in file(".")).
   settings(commonSettings: _*).
   settings(
@@ -25,8 +41,8 @@ lazy val root = (project in file(".")).
     publishMavenStyle := true,
     SbtPgp.autoImport.useGpgAgent := true,
     SbtPgp.autoImport.useGpg := true,
-    sbtrelease.ReleasePlugin.autoImport.releasePublishArtifactsAction := PgpKeys.publishSigned.value,
-    sbtrelease.ReleasePlugin.autoImport.releaseCrossBuild := true,
+    sbtrelease.ReleasePlugin.autoImport.releaseCrossBuild := false,
+    sbtrelease.ReleasePlugin.autoImport.releaseProcess := releaseSteps,
     publishArtifact in Test := false,
     parallelExecution in Test := false,
     scriptedLaunchOpts := { scriptedLaunchOpts.value ++ Seq(
