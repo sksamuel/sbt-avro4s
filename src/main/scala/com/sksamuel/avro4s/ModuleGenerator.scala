@@ -3,12 +3,14 @@ package com.sksamuel.avro4s
 import java.io.{File, InputStream}
 import java.nio.file.{Files, Path, Paths}
 
-import org.apache.avro.Schema
+import org.apache.avro.{LogicalTypes, Schema}
 import org.apache.avro.Schema.Parser
 
+import scala.reflect.api.JavaUniverse
 import scala.reflect.internal.SymbolTable
 
 object ModuleGenerator {
+
   import scala.collection.JavaConverters._
 
   def apply(in: InputStream): Seq[Module] = ModuleGenerator(Seq(new Parser().parse(in)))
@@ -18,7 +20,7 @@ object ModuleGenerator {
   }
   def singleParser(files: Seq[File]): Seq[Module] = ModuleGenerator {
     val unmanagedParser = new Parser()
-    files.map(unmanagedParser.parse(_))
+    files.map(unmanagedParser.parse)
   }
 
   def apply(schemata: Seq[Schema]): Seq[Module] = {
@@ -26,10 +28,11 @@ object ModuleGenerator {
     val types = scala.collection.mutable.Map.empty[String, Module]
 
     def schemaToType(schema: Schema): Type = {
+      val logicalTypeName = Option(schema.getLogicalType).map(_.getName)
       schema.getType match {
         case Schema.Type.ARRAY => ArrayType(schemaToType(schema.getElementType))
         case Schema.Type.BOOLEAN => PrimitiveType.Boolean
-        case Schema.Type.BYTES if schema.getProp("logicalType") == "decimal" => PrimitiveType.BigDecimal
+        case Schema.Type.BYTES if logicalTypeName.contains(LogicalTypes.decimal(2, 2).getName) => PrimitiveType.BigDecimal
         case Schema.Type.BYTES => PrimitiveType.Bytes
         case Schema.Type.DOUBLE => PrimitiveType.Double
         case Schema.Type.ENUM => types.getOrElse(schema.getFullName, enumFor(schema))
@@ -37,15 +40,16 @@ object ModuleGenerator {
         case Schema.Type.FLOAT => PrimitiveType.Float
         case Schema.Type.INT if schema.getProp("logicalType") == "time-millis" => PrimitiveType.Time
         case Schema.Type.INT => PrimitiveType.Int
-        case Schema.Type.LONG if schema.getProp("logicalType") == "time-micros"=> PrimitiveType.Time
-        case Schema.Type.LONG if schema.getProp("logicalType") == "timestamp-millis"=> PrimitiveType.Instant
-        case Schema.Type.LONG if schema.getProp("logicalType") == "timestamp-micros"=> PrimitiveType.Instant
+        case Schema.Type.LONG if schema.getProp("logicalType") == "time-micros" => PrimitiveType.Time
+        case Schema.Type.LONG if schema.getProp("logicalType") == "timestamp-millis" => PrimitiveType.Instant
+        case Schema.Type.LONG if schema.getProp("logicalType") == "timestamp-micros" => PrimitiveType.Instant
         case Schema.Type.LONG => PrimitiveType.Long
         case Schema.Type.MAP => MapType(schemaToType(schema.getValueType))
         case Schema.Type.NULL => NullType
         case Schema.Type.RECORD => types.getOrElse(schema.getFullName, recordFor(schema))
-        case Schema.Type.STRING => PrimitiveType("String")
-        case Schema.Type.UNION => UnionType(schema.getTypes.asScala.toSeq.map(schemaToType _))
+        case Schema.Type.STRING if logicalTypeName.contains(LogicalTypes.uuid().getName) => PrimitiveType.UUID
+        case Schema.Type.STRING => PrimitiveType.String
+        case Schema.Type.UNION => UnionType(schema.getTypes.asScala.map(schemaToType))
         case _ => sys.error("Unsupported field type: " + schema.getType)
       }
     }
@@ -77,7 +81,7 @@ object ModuleGenerator {
         schema.getType match {
           case Schema.Type.RECORD => recordFor(schema)
           case Schema.Type.UNION => dispatch(schema.getTypes.asScala)
-          case invalidSchema => throw new IllegalArgumentException(s"Found invalid top-level schema type ${invalidSchema}!")
+          case invalidSchema => throw new IllegalArgumentException(s"Found invalid top-level schema type $invalidSchema!")
         }
       }
 
@@ -113,6 +117,7 @@ object PrimitiveType {
   val String = PrimitiveType("String")
   val Int = PrimitiveType("Int")
   val Instant = PrimitiveType("java.time.Instant")
+  val UUID = PrimitiveType("java.util.UUID")
   val Time = PrimitiveType("java.time.LocalTime")
   val Boolean = PrimitiveType("Boolean")
 }
@@ -128,7 +133,7 @@ object UnionType {
 case object NullType extends Type
 
 case class FieldDef(name: String, `type`: Type) {
-  lazy val escapedName = {
+  lazy val escapedName: String = {
     if (FieldDef.isReservedKeyword(name)) {
       s"`$name`"
     } else {
@@ -138,8 +143,9 @@ case class FieldDef(name: String, `type`: Type) {
 }
 
 private object FieldDef {
-  val universe = scala.reflect.runtime.universe
-  val symbols = universe.asInstanceOf[SymbolTable]
+
+  val universe: JavaUniverse = scala.reflect.runtime.universe
+  val symbols: SymbolTable = universe.asInstanceOf[SymbolTable]
 
   def isReservedKeyword(name: String): Boolean = {
     symbols.nme.keywords.contains(symbols.newTermNameCached(name))

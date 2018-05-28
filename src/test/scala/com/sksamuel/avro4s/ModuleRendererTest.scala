@@ -26,6 +26,9 @@ class ModuleRendererTest extends WordSpec with Matchers {
     "write field for longs" in {
       new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("foo", PrimitiveType.Long)))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  foo: Long\n)"
     }
+    "write field for uuids" in {
+      new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("foo", PrimitiveType.UUID)))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  foo: java.util.UUID\n)"
+    }
     "generate field for Maps with strings" in {
       new ModuleRenderer()(RecordType("com.sammy", "MyClass", Seq(FieldDef("name", MapType(PrimitiveType.String))))) shouldBe "//auto generated code by avro4s\ncase class MyClass(\n  name: Map[String, String]\n)"
     }

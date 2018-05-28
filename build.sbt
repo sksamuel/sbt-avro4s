@@ -3,7 +3,7 @@ import sbt._
 import sbt.Keys._
 
 val AvroVersion = "1.8.2"
-val ScalatestVersion = "3.0.0"
+val ScalatestVersion = "3.0.5"
 
 lazy val commonSettings = Seq(
   organization := "com.sksamuel.avro4s",
