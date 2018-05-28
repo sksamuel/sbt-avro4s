@@ -51,9 +51,6 @@ lazy val root = (project in file(".")).
       "-Dplugin.version=" + version.value
     )},
     scriptedBufferLog := false,
-
-    crossSbtVersions := Vector("0.13.16", "1.1.5"),
-
     resolvers := ("releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2") +: resolvers.value,
 
     publishTo := {
