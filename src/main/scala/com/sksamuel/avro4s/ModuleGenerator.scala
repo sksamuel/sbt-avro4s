@@ -3,7 +3,7 @@ package com.sksamuel.avro4s
 import java.io.{File, InputStream}
 import java.nio.file.{Files, Path, Paths}
 
-import org.apache.avro.{LogicalTypes, Schema}
+import org.apache.avro.Schema
 import org.apache.avro.Schema.Parser
 
 import scala.reflect.api.JavaUniverse
@@ -28,11 +28,11 @@ object ModuleGenerator {
     val types = scala.collection.mutable.Map.empty[String, Module]
 
     def schemaToType(schema: Schema): Type = {
-      val logicalTypeName = Option(schema.getLogicalType).map(_.getName)
+      val logicalTypeName = Option(schema.getLogicalType).map(_.getName).orNull
       schema.getType match {
         case Schema.Type.ARRAY => ArrayType(schemaToType(schema.getElementType))
         case Schema.Type.BOOLEAN => PrimitiveType.Boolean
-        case Schema.Type.BYTES if logicalTypeName.contains(LogicalTypes.decimal(2, 2).getName) => PrimitiveType.BigDecimal
+        case Schema.Type.BYTES if logicalTypeName == "decimal" => PrimitiveType.BigDecimal
         case Schema.Type.BYTES => PrimitiveType.Bytes
         case Schema.Type.DOUBLE => PrimitiveType.Double
         case Schema.Type.ENUM => types.getOrElse(schema.getFullName, enumFor(schema))
@@ -47,7 +47,7 @@ object ModuleGenerator {
         case Schema.Type.MAP => MapType(schemaToType(schema.getValueType))
         case Schema.Type.NULL => NullType
         case Schema.Type.RECORD => types.getOrElse(schema.getFullName, recordFor(schema))
-        case Schema.Type.STRING if logicalTypeName.contains(LogicalTypes.uuid().getName) => PrimitiveType.UUID
+        case Schema.Type.STRING if logicalTypeName == "uuid" => PrimitiveType.UUID
         case Schema.Type.STRING => PrimitiveType.String
         case Schema.Type.UNION => UnionType(schema.getTypes.asScala.map(schemaToType))
         case _ => sys.error("Unsupported field type: " + schema.getType)
