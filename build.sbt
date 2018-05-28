@@ -52,7 +52,7 @@ lazy val root = (project in file(".")).
     )},
     scriptedBufferLog := false,
 
-    crossSbtVersions := Vector("0.13.16", "1.0.4"),
+    crossSbtVersions := Vector("0.13.16", "1.1.5"),
 
     resolvers := ("releases" at "https://oss.sonatype.org/service/local/staging/deploy/maven2") +: resolvers.value,
 
