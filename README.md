@@ -2,6 +2,8 @@
 
 [<img src="https://img.shields.io/maven-central/v/com.sksamuel.avro4s/sbt-avro4s*.svg?label=latest%20release"/>](http://search.maven.org/#search%7Cga%7C1%7Csbt-avro4s)
 
+## This project is now deprecated in favour of [sbt-avrohugger](https://github.com/julianpeeters/sbt-avrohugger). Continue to use [avro4s](https://github.com/sksamuel/avro4s) in conjection with avrohugger. No further bug fixes or features will be added to this library.
+
 Sbt plugin to use avro4s to generate case classes from avro schemas
 
 ## Quickstart
